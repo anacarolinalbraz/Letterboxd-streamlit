@@ -3,7 +3,9 @@ import pandas as pd
 
 df = pd.read_csv("diary.csv")
 
-st.set_page_config(page_title="Movie Analysis", page_icon="🎥")
+st.set_page_config(page_title="Movie Analysis", page_icon="🎥", layout="wide")
+st.title("Life on Film")
+
 df["Watched Date"] = pd.to_datetime(df["Watched Date"])
 
 df["Year Watched"] = df["Watched Date"].dt.year
@@ -20,29 +22,41 @@ meses = {
 
 df["Month Name"] = df["Month Watched"].map(meses)
 
-st.title("Life on Film")
+with st.sidebar:
+    st.title("Filters:")
 
+    watched_year_list = df["Year Watched"].unique()
+    selection = st.pills("Select the year(s) to be analyzed", watched_year_list, selection_mode="multi")
+
+    if selection:
+        df_filtrado = df[df["Year Watched"].isin(selection)]
+    else:
+        df_filtrado = df    
+
+       
 col1, col2, col3, col4 = st.columns(4)
 
-qtde_filmes = len(df)
-nos_cinemas = df["Tags"].count()
-periodos = df["Period"].nunique()
+qtde_filmes = len(df_filtrado)
+nos_cinemas = df_filtrado["Tags"].count()
+periodos = df_filtrado["Period"].nunique()
 monthly_avg = qtde_filmes / periodos
-ano_mais_assistido = df["Year Watched"].value_counts().idxmax()
+ano_mais_assistido = df_filtrado["Year Watched"].value_counts().idxmax()
 
 col1.metric(label="Total Movies Watched", value=qtde_filmes, border=True)
 col2.metric(label="Watched on Theaters", value=nos_cinemas, border=True)
 col3.metric(label="Monthly Average", value=f"{monthly_avg:.2f}", border=True)
 col4.metric(label="Year Mostly Watched", value=ano_mais_assistido, border=True)
 
-st.subheader("Ratings Given")
-st.bar_chart(df["Rating"].value_counts().sort_index())
+col1_chart, col2_chart = st.columns(2)
 
-st.subheader("Movies watched by month")
-st.bar_chart(df["Month Watched"].value_counts().sort_index())
+col1_chart.subheader("Ratings Given")
+col1_chart.bar_chart(df_filtrado["Rating"].value_counts().sort_index())
 
-st.subheader("Movies by week-day")
-st.bar_chart(df["Weekday"].value_counts().sort_index())
+col2_chart.subheader("Movies watched by month")
+col2_chart.bar_chart(df_filtrado["Month Watched"].value_counts().sort_index())
+
+col1_chart.subheader("Movies by week-day")
+col1_chart.bar_chart(df_filtrado["Weekday"].value_counts().sort_index())
 
 exp1 = st.expander("Detailed Data")
-exp1.dataframe(df)
+exp1.dataframe(df_filtrado)
