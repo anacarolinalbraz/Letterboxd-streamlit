@@ -21,18 +21,34 @@ meses = {
 }
 
 df["Month Name"] = df["Month Watched"].map(meses)
+ordem_meses = list(meses.values())
+df["Month Name"] = pd.Categorical(df["Month Name"], categories=ordem_meses, ordered=True)
+
+ordem_dias = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+df["Weekday"] = pd.Categorical(df["Weekday"], categories=ordem_dias, ordered=True)
 
 with st.sidebar:
     st.title("Filters:")
 
     watched_year_list = df["Year Watched"].unique()
-    selection = st.pills("Select the year(s) to be analyzed", watched_year_list, selection_mode="multi")
+    year_selection = st.pills("Select the year(s) to be analyzed", watched_year_list, selection_mode="multi")
 
-    if selection:
-        df_filtrado = df[df["Year Watched"].isin(selection)]
-    else:
-        df_filtrado = df    
+    watched_month_list = df["Month Watched"].unique()
+    month_selection = st.pills("Select the months to be analyzed", watched_month_list, selection_mode="multi") 
 
+    rating_given_list = df["Rating"].unique()
+    rating_selection = st.pills("Select the rating to be analyzed", rating_given_list, selection_mode="multi")
+
+    df_filtrado = df.copy()
+    
+    if year_selection:
+        df_filtrado = df_filtrado[df_filtrado["Year Watched"].isin(year_selection)]
+
+    if month_selection:
+        df_filtrado = df_filtrado[df_filtrado["Month Watched"].isin(month_selection)]
+
+    if rating_selection:
+        df_filtrado = df_filtrado[df_filtrado["Rating"].isin(rating_selection)]               
        
 col1, col2, col3, col4 = st.columns(4)
 
@@ -53,7 +69,7 @@ col1_chart.subheader("Ratings Given")
 col1_chart.bar_chart(df_filtrado["Rating"].value_counts().sort_index())
 
 col2_chart.subheader("Movies watched by month")
-col2_chart.bar_chart(df_filtrado["Month Watched"].value_counts().sort_index())
+col2_chart.bar_chart(df_filtrado["Month Name"].value_counts().sort_index())
 
 col1_chart.subheader("Movies by week-day")
 col1_chart.bar_chart(df_filtrado["Weekday"].value_counts().sort_index())
